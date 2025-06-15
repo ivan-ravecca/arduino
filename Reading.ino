@@ -14,8 +14,8 @@ ZMPT101B voltageSensorB(sensorBPin, UTE_FREQUENCY);
 // ++++++++++++++++++++++++++++
 // Threshold and timing variables
 const float VOLTAGE_THRESHOLD = 180.0;  // Only report as energized above 180V
-const unsigned long READING_INTERVAL = 10;  // Read every 10 seconds
-const unsigned long LONG_RUN_THRESHOLD = 60;  // 10 minute threshold for long run warning (in seconds)
+const unsigned long READING_INTERVAL = 10;  // Read every X seconds
+const unsigned long LONG_RUN_THRESHOLD = 600;  // X minute threshold for long run warning (in seconds)
 
 // Time sync variables
 unsigned long lastSyncTime = 0;
@@ -30,6 +30,10 @@ time_t lastReadingTime = 0;
 bool sensorALongRunReported = false;  // Track if long run was already reported
 bool sensorBLongRunReported = false;  // Track if long run was already reported
 bool firstRun = true;  // Add this as a global variable at the top
+
+time_t sensorALastAlertTime = 0;  // Track when last alert was sent for sensor A
+time_t sensorBLastAlertTime = 0;  // Track when last alert was sent for sensor B
+const unsigned long ALERT_REPEAT_INTERVAL = LONG_RUN_THRESHOLD / 2UL;  // Repeat alert every X minutes 
 // ++++++++++++++++++++++++++++
 
 const int buzzerPin = 8;
@@ -59,6 +63,9 @@ void setup() {
     Serial.println("=======================================");
 
     pinMode(buzzerPin, OUTPUT);
+
+    doSOS();
+
     // Allow sensor to stabilize
     delay(5000);
 }
@@ -188,6 +195,13 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
     // Sensor just became de-energized
     isEnergized = false;
     longRunReported = false; // Reset the long run flag
+    // Reset alert time
+    if (sensorNum == sensorAPin) {
+      sensorALastAlertTime = 0;
+    } else {
+      sensorBLastAlertTime = 0;
+    }
+    
     unsigned long energizedDuration = currentTime - startTime;
     startTime = 0; // Reset start time
     // Report energization time
@@ -203,11 +217,30 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
     Serial.println("========================================");
   }
   
-  // Check for long run condition (in seconds now)
+  time_t &lastAlertTime = (sensorNum == sensorAPin) ? sensorALastAlertTime : sensorBLastAlertTime;
+  
+  // Check for initial long run condition
   if (isEnergized && ((unsigned long)(currentTime - startTime) > LONG_RUN_THRESHOLD) && !longRunReported) {
     unsigned long runningDuration = currentTime - startTime;
     longRun(sensorNum, runningDuration);
-    longRunReported = true; // Prevent repeated reports
+    longRunReported = true; // Prevent repeated immediate reports
+    lastAlertTime = currentTime; // Set initial alert time
+  }
+  
+  // Check for repeating alerts if already in long-run state
+  if (isEnergized && longRunReported && 
+      ((unsigned long)(currentTime - lastAlertTime) >= ALERT_REPEAT_INTERVAL)) {
+    unsigned long runningDuration = currentTime - startTime;
+    Serial.println("!!! REPEAT WARNING !!!");
+    Serial.print("Sensor ");
+    Serial.print((sensorNum == sensorAPin) ? 'A' : 'B');
+    Serial.print(" has been running for ");
+    printDuration(runningDuration);
+    Serial.print("At this time: ");
+    printDateTime(currentTime);
+    Serial.println("!!! REPEAT WARNING !!!");
+    doSOS();
+    lastAlertTime = currentTime; // Update the last alert time
   }
 }
 
