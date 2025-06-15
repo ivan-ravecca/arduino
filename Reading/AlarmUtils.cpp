@@ -1,4 +1,4 @@
-#include "alarmUtils.h"
+#include "AlarmUtils.h"
 
 // Constants
 const int buzzerPin = 8;     // Digital pin connected to the buzzer

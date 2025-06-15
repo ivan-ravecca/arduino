@@ -1,6 +1,6 @@
-#include "sensorUtils.h"
-#include "displayUtils.h"
-#include "alarmUtils.h"
+#include "SensorUtils.h"
+#include "DisplayUtils.h"
+#include "AlarmUtils.h"
 
 // Sensor configuration
 #define SENSOR_A_SENSITIVITY 660.0f
@@ -17,8 +17,8 @@ ZMPT101B voltageSensorB(sensorBPin, UTE_FREQUENCY);
 
 // Thresholds and timing
 const float VOLTAGE_THRESHOLD = 180.0;                                // Only report as energized above 180V
-const unsigned long READING_INTERVAL = 1;                             // Read every X seconds
-const unsigned long LONG_RUN_THRESHOLD = 45;                          // X minute threshold for long run warning (in seconds)
+const unsigned long READING_INTERVAL = 10;                            // Read every X seconds
+const unsigned long LONG_RUN_THRESHOLD = 600;                         // X minute threshold for long run warning (in seconds)
 const unsigned long ALERT_REPEAT_INTERVAL = LONG_RUN_THRESHOLD / 2UL; // Repeat alert every X minutes
 
 // State tracking variables

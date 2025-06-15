@@ -1,7 +1,7 @@
-#include "sensorUtils.h"
-#include "timeUtils.h"
-#include "alarmUtils.h"
-#include "displayUtils.h"
+#include "SensorUtils.h"
+#include "TimeUtils.h"
+#include "AlarmUtils.h"
+#include "DisplayUtils.h"
 
 void setup()
 {
