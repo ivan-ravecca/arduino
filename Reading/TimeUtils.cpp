@@ -35,6 +35,11 @@ void syncMyTime()
     Serial.println("------------------------------------");
 }
 
+void updateLastSyncTime()
+{
+    lastSyncTime = now();
+}
+
 void checkTimeSync(time_t currentTime)
 {
     // Check if it's time to sync

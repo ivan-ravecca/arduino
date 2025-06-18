@@ -1,6 +1,7 @@
 #include "SensorUtils.h"
 #include "DisplayUtils.h"
 #include "AlarmUtils.h"
+#include "SerialComm.h"
 
 // Sensor configuration
 #define SENSOR_A_SENSITIVITY 660.0f
@@ -94,6 +95,7 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
                         time_t currentTime, bool &longRunReported)
 {
     bool aboveThreshold = (voltage > VOLTAGE_THRESHOLD);
+    char sensorId = (sensorNum == sensorAPin) ? 'A' : 'B';
 
     // Special handling for initial state detection
     if (firstRun && aboveThreshold)
@@ -107,8 +109,12 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
         isEnergized = true;
         longRunReported = false; // Reset the long run flag
         startTime = currentTime;
+
+        // Send update to ESP32
+        sendSensorUpdate(sensorId, true, voltage, false);
+
         Serial.print("*** Sensor ");
-        Serial.print((sensorNum == sensorAPin) ? 'A' : 'B');
+        Serial.print(sensorId);
         Serial.print(" ENERGIZED at ");
         Serial.print(voltage, 2);
         Serial.print("V at ");
@@ -119,6 +125,10 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
         // Sensor just became de-energized
         isEnergized = false;
         longRunReported = false; // Reset the long run flag
+
+        // Send update to ESP32
+        sendSensorUpdate(sensorId, false, voltage, false);
+
         // Reset alert time
         if (sensorNum == sensorAPin)
         {
@@ -134,7 +144,7 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
         // Report energization time
         Serial.println("========================================");
         Serial.print(">>> Sensor ");
-        Serial.print((sensorNum == sensorAPin) ? 'A' : 'B');
+        Serial.print(sensorId);
         Serial.println(" DE-ENERGIZED <<<");
         Serial.print("Duration: ");
         printDuration(energizedDuration);
@@ -150,6 +160,10 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
     if (isEnergized && ((unsigned long)(currentTime - startTime) > LONG_RUN_THRESHOLD) && !longRunReported)
     {
         unsigned long runningDuration = currentTime - startTime;
+
+        // Send update to ESP32 with alarm
+        sendSensorUpdate(sensorId, true, voltage, false);
+
         longRun(sensorNum, runningDuration);
         longRunReported = true;      // Prevent repeated immediate reports
         lastAlertTime = currentTime; // Set initial alert time
@@ -160,9 +174,13 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
         ((unsigned long)(currentTime - lastAlertTime) >= ALERT_REPEAT_INTERVAL))
     {
         unsigned long runningDuration = currentTime - startTime;
+
+        // Send update to ESP32 with repeated alarm
+        sendSensorUpdate(sensorId, true, voltage, true);
+
         Serial.println("!!! REPEAT WARNING !!!");
         Serial.print("Sensor ");
-        Serial.print((sensorNum == sensorAPin) ? 'A' : 'B');
+        Serial.print(sensorId);
         Serial.print(" has been running for ");
         printDuration(runningDuration);
         Serial.print("At this time: ");
