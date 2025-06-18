@@ -16,12 +16,10 @@ void printDateTime(time_t t)
     Serial.println(year(t));
 }
 
-void printDuration(unsigned long durationSeconds)
+void printDuration(unsigned long durationMinutes)
 {
-    unsigned long minutes = durationSeconds / 60;
-    unsigned long seconds = durationSeconds % 60;
-    unsigned long hours = minutes / 60;
-    minutes = minutes % 60;
+    unsigned long hours = durationMinutes / 60;
+    unsigned long minutes = durationMinutes % 60;
 
     if (hours > 0)
     {
@@ -31,8 +29,11 @@ void printDuration(unsigned long durationSeconds)
     if (minutes > 0)
     {
         Serial.print(minutes);
-        Serial.print(" min ");
+        Serial.print(" min");
     }
-    Serial.print(seconds);
-    Serial.println(" sec");
+    else if (hours == 0)
+    {
+        Serial.print("0 min");
+    }
+    Serial.println();
 }

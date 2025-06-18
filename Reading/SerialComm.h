@@ -11,7 +11,7 @@ extern SoftwareSerial espSerial;
 // Function declarations
 void initSerialComm();
 void requestTimeFromESP32();
-void sendSensorUpdate(char sensorId, bool isEnergized, float voltage, bool isRepeatedAlarm);
+void sendSensorUpdate(char sensorId, bool isEnergized, float voltage, bool isRepeatedAlarm, unsigned long durationMinutes);
 bool handleIncomingMessages();
 void processSyncTimeMessage(String timeStr);
 

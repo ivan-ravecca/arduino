@@ -20,11 +20,13 @@ void setup()
   initSensors();
   initAlarm();
 
-  // SOS alert at startup
-  doSOS();
+  // Alert at startup
+  dash();
+  dash();
+  dash();
 
   // Allow sensor to stabilize
-  delay(5000);
+  delay(1000);
 }
 
 void loop()

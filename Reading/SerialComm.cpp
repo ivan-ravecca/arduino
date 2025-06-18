@@ -24,9 +24,10 @@ void requestTimeFromESP32()
     espSerial.println("GET_CURRENT_TIME");
 }
 
-void sendSensorUpdate(char sensorId, bool isEnergized, float voltage, bool isRepeatedAlarm)
+// Modified to include duration parameter
+void sendSensorUpdate(char sensorId, bool isEnergized, float voltage, bool isRepeatedAlarm, unsigned long durationMinutes)
 {
-    // Format: SENSOR_UPDATE,<ID>,<STATUS>,<VOLTAGE>,<ALARM>
+    // Format: SENSOR_UPDATE,<ID>,<STATUS>,<VOLTAGE>,<ALARM>,<DURATION>
     espSerial.print("SENSOR_UPDATE,");
     espSerial.print(sensorId);
     espSerial.print(",");
@@ -34,7 +35,9 @@ void sendSensorUpdate(char sensorId, bool isEnergized, float voltage, bool isRep
     espSerial.print(",");
     espSerial.print(voltage);
     espSerial.print(",");
-    espSerial.println(isRepeatedAlarm ? "1" : "0");
+    espSerial.print(isRepeatedAlarm ? "1" : "0");
+    espSerial.print(",");
+    espSerial.println(durationMinutes);
 
     Serial.print("Sent to ESP32: SENSOR_UPDATE,");
     Serial.print(sensorId);
@@ -43,7 +46,9 @@ void sendSensorUpdate(char sensorId, bool isEnergized, float voltage, bool isRep
     Serial.print(",");
     Serial.print(voltage);
     Serial.print(",");
-    Serial.println(isRepeatedAlarm ? "1" : "0");
+    Serial.print(isRepeatedAlarm ? "1" : "0");
+    Serial.print(",");
+    Serial.println(durationMinutes);
 }
 
 bool handleIncomingMessages()
@@ -72,17 +77,54 @@ bool handleIncomingMessages()
 
 void processSyncTimeMessage(String timeStr)
 {
-    // Expected format: TIME:1656789012 (Unix timestamp)
+    // Expected format: TIME:YYYY-MM-DD HH:MM:SS
     Serial.print("Processing time sync: ");
     Serial.println(timeStr);
 
-    unsigned long unixTime = timeStr.toInt();
+    // Parse the date-time string
+    // Format: 2025-06-18 12:50:20
+    int year = timeStr.substring(0, 4).toInt();
+    int month = timeStr.substring(5, 7).toInt();
+    int day = timeStr.substring(8, 10).toInt();
+    int hour = timeStr.substring(11, 13).toInt();
+    int minute = timeStr.substring(14, 16).toInt();
+    int second = timeStr.substring(17, 19).toInt();
 
-    // Check if time value seems valid (after 2020-01-01)
-    if (unixTime > 1577836800)
+    // Validate parsed values
+    if (year >= 2020 && month >= 1 && month <= 12 && day >= 1 && day <= 31 &&
+        hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 && second >= 0 && second <= 59)
     {
-        Serial.println("Setting time from ESP32");
-        setTime(unixTime);
+
+        Serial.print("Setting time to: ");
+        Serial.print(year);
+        Serial.print("-");
+        Serial.print(month);
+        Serial.print("-");
+        Serial.print(day);
+        Serial.print(" ");
+        Serial.print(hour);
+        Serial.print(":");
+        Serial.print(minute);
+        Serial.print(":");
+        Serial.println(second);
+
+        setTime(hour, minute, second, day, month, year);
         updateLastSyncTime(); // Update the last sync time in TimeUtils
+    }
+    else
+    {
+        Serial.println("Received invalid date-time format from ESP32");
+        Serial.print("Parsed values: Y:");
+        Serial.print(year);
+        Serial.print(" M:");
+        Serial.print(month);
+        Serial.print(" D:");
+        Serial.print(day);
+        Serial.print(" H:");
+        Serial.print(hour);
+        Serial.print(" M:");
+        Serial.print(minute);
+        Serial.print(" S:");
+        Serial.println(second);
     }
 }
