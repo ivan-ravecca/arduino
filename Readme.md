@@ -15,7 +15,6 @@ This Arduino project monitors two AC input lines and reports their status (energ
 - Arduino UNO microcontroller
 - 2x ZMPT101B voltage sensor modules
 - Active buzzer module
-- Ethernet shield with W5100 chipset
 
 ### Installation
 
@@ -30,11 +29,16 @@ This Arduino project monitors two AC input lines and reports their status (energ
 ```
 /
 ├── Reading/
-│   ├── ac_monitor.ino
-│   ├── config.h
-│   └── README.md
-└── docs/
-    └── wiring_diagram.png TBD
+│   ├── Reading.ino
+│   ├── AlarmUtils.h/cpp
+│   ├── DisplayUtils.h/cpp
+│   ├── SensorUtils.h/cpp
+│   ├── SerialComm.h/cpp
+│   ├── TimeUtils.h/cpp
+│   └── libraries/
+├── README.md
+├── docs/
+    └── wiring_diagram.png
 ```
 
 ## Contributing
