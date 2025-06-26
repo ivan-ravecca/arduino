@@ -19,7 +19,7 @@ ZMPT101B voltageSensorB(sensorBPin, UTE_FREQUENCY);
 // Thresholds and timing
 const float VOLTAGE_THRESHOLD = 180.0;                                // Only report as energized above 180V
 const unsigned long READING_INTERVAL = 5;                             // Read every X seconds
-const unsigned long LONG_RUN_THRESHOLD = 900;                         // X minute threshold for long run warning (in seconds)
+const unsigned long LONG_RUN_THRESHOLD = 600;                         // X minute threshold for long run warning (in seconds)
 const unsigned long ALERT_REPEAT_INTERVAL = LONG_RUN_THRESHOLD / 2UL; // Repeat alert every X minutes
 
 // State tracking variables
@@ -180,6 +180,7 @@ void processSensorState(int sensorNum, float voltage, bool &isEnergized, time_t 
         printDateTime(currentTime);
         Serial.println("!!! REPEAT WARNING !!!");
         doSOS();
+        doSOS();
         lastAlertTime = currentTime; // Update the last alert time
     }
 }
@@ -197,6 +198,7 @@ void longRun(int sensorNum, unsigned long duration)
     Serial.print("At this time: ");
     printDateTime(now());
     Serial.println("!!! WARNING !!!");
+    doSOS();
     doSOS();
 }
 
