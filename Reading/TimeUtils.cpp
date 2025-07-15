@@ -1,25 +1,51 @@
 #include "TimeUtils.h"
+#include "SerialComm.h"
 
 // Time sync variables
 unsigned long lastSyncTime = 0;
-const unsigned long SYNC_INTERVAL = 3600; // Try to sync time every hour (in seconds)
+const unsigned long SYNC_INTERVAL = 3600; // Try to sync time every X seconds
+unsigned long timeRequestSentAt = 0;
+const unsigned long TIME_REQUEST_TIMEOUT = 5000; // 5 seconds timeout for ESP32 to respond
+bool timeRequestPending = false;
+bool timeReceived = false;
 
 void initTime()
 {
-    // Initialize time
+    // Initialize time with default values
+    setTime(12, 0, 0, 1, 1, 2025); // Default time: 12:00:00 1/1/2025
+
+    // Request time from ESP32
     syncMyTime();
 }
 
 void syncMyTime()
 {
-    // This is a placeholder - when internet is available,
-    // replace with actual NTP time fetch
-
-    // For now, set a static timestamp (June 15, 2025, 12:00:00)
-    setTime(12, 0, 0, 15, 6, 2025); // hr, min, sec, day, month, year
-
+    // Request time from ESP32
     Serial.println("--------- Time synchronization ---------");
-    Serial.println("Manual");
+
+    // Send time request to ESP32
+    requestTimeFromESP32();
+
+    // Set pending flag and record request time
+    timeRequestPending = true;
+    timeRequestSentAt = millis();
+
+    // The actual time update will happen when ESP32 responds with TIME message
+    // which is handled in SerialComm.cpp via processSyncTimeMessage()
+}
+
+void updateLastSyncTime()
+{
+    lastSyncTime = now();
+    timeReceived = true;
+    timeRequestPending = false;
+
+    Serial.println("Time successfully synchronized");
+    printCurrentTime();
+}
+
+void printCurrentTime()
+{
     Serial.print("Current time: ");
     Serial.print(hour());
     Serial.print(":");
@@ -37,10 +63,23 @@ void syncMyTime()
 
 void checkTimeSync(time_t currentTime)
 {
-    // Check if it's time to sync
-    if (currentTime - lastSyncTime >= SYNC_INTERVAL)
+    // Check for timeout on pending time request
+    if (timeRequestPending && (millis() - timeRequestSentAt > TIME_REQUEST_TIMEOUT))
+    {
+        Serial.println("Time request timeout - ESP32 did not respond");
+        timeRequestPending = false;
+
+        // If we've never received time, print current (fallback) time
+        if (!timeReceived)
+        {
+            Serial.println("Using fallback time:");
+            printCurrentTime();
+        }
+    }
+
+    // Check if it's time for a regular sync
+    if (currentTime - lastSyncTime >= SYNC_INTERVAL && !timeRequestPending)
     {
         syncMyTime();
-        lastSyncTime = now();
     }
 }

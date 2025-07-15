@@ -12,5 +12,7 @@ extern const unsigned long SYNC_INTERVAL;
 void initTime();
 void syncMyTime();
 void checkTimeSync(time_t currentTime);
+void updateLastSyncTime(); // New function to update last sync time
+void printCurrentTime();
 
 #endif
