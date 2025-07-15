@@ -1,5 +1,6 @@
 #include "SerialComm.h"
 #include "TimeUtils.h"
+#include "AlarmUtils.h"
 
 // Define pins for SoftwareSerial connection to ESP32
 const int ESP_RX_PIN = 2; // Connect to ESP32 TX
@@ -68,6 +69,17 @@ bool handleIncomingMessages()
         {
             processSyncTimeMessage(message.substring(5));
             messageProcessed = true;
+        }
+        else if (message.startsWith("WIFI:CONNECTED"))
+        {
+            Serial.println("ESP32 WiFi connected.");
+            messageProcessed = true;
+            // Auditive info to notify esp32 is connected
+            dash();
+            dot();
+            dot();
+            dot();
+            dash();
         }
         // Add other message types as needed
     }
